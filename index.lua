@@ -15,10 +15,10 @@ local function readAll(file)
 end
 local config = json.decode(readAll("config.json"))
 
-client:on("messageCreate", events.messageCreate(client))
-client:on("guildCreate", events.guildCreate(client))
-client:on("guildUpdate", events.guildUpdate(client))
-client:on("guildDelete", events.guildDelete(client))
+client:on("messageCreate", events.messageCreate)
+client:on("guildCreate", events.guildCreate)
+client:on("guildUpdate", events.guildUpdate)
+client:on("guildDelete", events.guildDelete)
 client:on("ready", events.ready)
 
 client:run("Bot " .. config["token"])

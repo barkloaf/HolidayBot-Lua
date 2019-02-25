@@ -2,13 +2,11 @@ local discordia = require("discordia")
 local Date = discordia.Date
 
 local function ping(client, message)
-    local discordia = require("discordia")
-    local Date = discordia.Date
     message.channel:send{embed = {
         color = 0x10525C,
         author = {
-            name = "HolidayBot",
-            icon_url = "https://www.lua.org/manual/5.3/logo.gif"
+            name = client.user.username,
+            icon_url = client.user:getAvatarURL()
         },
         title = "Pong!",
         description = (Date() - Date.fromSnowflake(message.id)):toString(),
