@@ -3,7 +3,9 @@ local discordia = require('discordia')
 local client = discordia.Client()
 discordia.extensions()
 local json = require("json")
-local dbFile = require("./db")
+local dbFile = require("./modules/db")
+local fs = require("fs")
+local events = require("./modules/events")
 
 local function readAll(file)
     local f = assert(io.open(file, "rb"))
@@ -13,15 +15,11 @@ local function readAll(file)
 end
 local config = json.decode(readAll("config.json"))
 
-client:on('guildCreate', function(guild)
-    dbFile.createGuild(guild);
-end)
-client:on('messageCreate', function(message)
-    local prefixDBResult = r.reql().db("HolidayBot_Lua").table("guilds").get(message.guild.id).getField("prefix").run()
-    if (message.content == "" .. prefixDBResult .. "ping") then
-        message:reply("pong")
-	end
-end)
+client:on("messageCreate", events.messageCreate(client))
+client:on("guildCreate", events.guildCreate(client))
+client:on("guildUpdate", events.guildUpdate(client))
+client:on("guildDelete", events.guildDelete(client))
+client:on("ready", events.ready)
 
 client:run("Bot " .. config["token"])
 end)()

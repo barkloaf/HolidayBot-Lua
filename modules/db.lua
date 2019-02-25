@@ -35,13 +35,41 @@ local function createGuild(guild)
     return r.reql().db("HolidayBot_Lua").table("guilds").insert({
         id = guild.id,
         guildname = guild.name,
-        prefix = "h]",
+        prefix = "h[",
         region = getDefaultRegion(guild),
         adult = false,
         daily = true,
         dailyChannel = getDefaultChannel(guild).id,
         command = true
     }).run()
+end
+
+local function getGuildName(guildID)
+    return r.reql().db("HolidayBot_Lua").table("guilds").get(guildID).getField("guildname").run()
+end
+
+local function getPrefix(guildID)
+    return r.reql().db("HolidayBot_Lua").table("guilds").get(guildID).getField("prefix").run()
+end
+
+local function getRegion(guildID)
+    return r.reql().db("HolidayBot_Lua").table("guilds").get(guildID).getField("region").run()
+end
+
+local function getAdult(guildID)
+    return r.reql().db("HolidayBot_Lua").table("guilds").get(guildID).getField("adult").run()
+end
+
+local function getDaily(guildID)
+    return r.reql().db("HolidayBot_Lua").table("guilds").get(guildID).getField("daily").run()
+end
+
+local function getDailyChannel(guildID)
+    return r.reql().db("HolidayBot_Lua").table("guilds").get(guildID).getField("dailyChannel").run()
+end
+
+local function getCommand(guildID)
+    return r.reql().db("HolidayBot_Lua").table("guilds").get(guildID).getField("command").run()
 end
 
 local function updatePrefix(guildID, newPrefix)
@@ -88,6 +116,13 @@ end
 
 return {
     createGuild = createGuild,
+    getGuildName = getGuildName,
+    getPrefix = getPrefix,
+    getRegion = getRegion,
+    getAdult = getAdult,
+    getDaily = getDaily,
+    getDailyChannel = getDailyChannel,
+    getCommand = getCommand,
     updatePrefix = updatePrefix,
     updateRegion = updateRegion,
     updateAdult = updateAdult,
