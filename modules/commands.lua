@@ -157,11 +157,9 @@ local function eval(client, message, args, command)
         envir.guild = message.guild
         envir.client = message.client
    
-        local function preEval()
-            local evaled, err = load("".. code, "eval", "t", envir)()
-        end
-        local success, err = pcall(preEval)
-        if not success then
+        local f, loadErr = load(code, "eval", "t", envir)
+
+        if not f then
             return message.channel:send{embed = {
                 color = 0x10525C,
                 title = "❌ Eval Failed",
@@ -171,26 +169,42 @@ local function eval(client, message, args, command)
                 },
                 {
                     name = "Output",
-                    value = err
+                    value = loadErr
                 }
                 }
             }}
         else
-            p(preEval())
-            local output = "```lua\n".. preEval().. "\n```"
-            if(string.len(output) > 1028) then output = "```lua\noverflow```" end
-            return message.channel:send{embed = {
-                color = 0x10525c,
-                title = "✅ Eval Successful",
-                fields = {{
-                    name = "Input",
-                    value = "```lua\n".. code.. "\n```"
-                },
-                {
-                    name = "Output",
-                    value = output
+            local success, output = pcall(f)
+            if success then
+                local newOutput = "```lua\n".. output.. "\n```"
+                if(string.len(output) > 1028) then output = "```lua\noverflow```" end
+                return message.channel:send{embed = {
+                    color = 0x10525c,
+                    title = "✅ Eval Successful",
+                    fields = {{
+                        name = "Input",
+                        value = "```lua\n".. code.. "\n```"
+                    },
+                    {
+                        name = "Output",
+                        value = newOutput
+                    }}
                 }}
-            }}
+            else
+                return message.channel:send{embed = {
+                    color = 0x10525C,
+                    title = "❌ Eval Failed",
+                    fields = {{
+                        name = "Input",
+                        value = "```lua\n".. code.. "\n```"
+                    },
+                    {
+                        name = "Output",
+                        value = error
+                    }
+                    }
+                }}
+            end
         end
 
     else return message.channel:send{embed = {
