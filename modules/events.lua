@@ -2,6 +2,9 @@ local dbFile = require("./db")
 local misc = require("./misc")
 local fs = require("fs")
 local commands = require("./commands")
+local discordia = require('discordia')
+local dbFile = require("./db")
+
 function string:split( inSplitPattern, outResults )
     if not outResults then
       outResults = { }
@@ -18,6 +21,7 @@ function string:split( inSplitPattern, outResults )
 end
 
 local function messageCreate(message)
+    local client = message.client
     if message.author.bot==true then return end
     if not message.guild then return end
     local prefixLength = string.len(dbFile.getPrefix(message.guild.id))
@@ -26,10 +30,9 @@ local function messageCreate(message)
     local prefixLengthPlus1 = string.len(dbFile.getPrefix(message.guild.id)) + 1
     local command = message.content:sub(prefixLengthPlus1)
     local args = command:split(" ")
-    
     if commands["".. args[1]] == nil then return end
     
-    commands["".. args[1]](client, message, args)
+    commands["".. args[1]](client, message, args, command)
 end
 local function guildCreate(guild) end
 local function guildUpdate(guild) end

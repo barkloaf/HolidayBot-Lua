@@ -6,14 +6,9 @@ local json = require("json")
 local dbFile = require("./modules/db")
 local fs = require("fs")
 local events = require("./modules/events")
+local misc = require("./modules/misc")
 
-local function readAll(file)
-    local f = assert(io.open(file, "rb"))
-    local content = f:read("*all")
-    f:close()
-    return content
-end
-local config = json.decode(readAll("config.json"))
+local config = json.decode(misc.readAll("config.json"))
 
 client:on("messageCreate", events.messageCreate)
 client:on("guildCreate", events.guildCreate)
