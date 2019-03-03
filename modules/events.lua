@@ -31,18 +31,39 @@ local function messageCreate(message)
     local command = message.content:sub(prefixLengthPlus1)
     local args = command:split(" ")
     if commands["".. args[1]] == nil then return end
-    
+
     commands["".. args[1]](client, message, args, command)
+    
+    misc.cmdHook(client, message.content, "succ", nil, message.author, message.guild, nil)
 end
-local function guildCreate(guild) end
-local function guildUpdate(guild) end
-local function guildDelete(guild) end
-local function ready() end
+local function guildCreate(guild)
+    local client = guild.client
+    dbFile.createGuild(guild)
+    misc.cmdHook(client, nil, "info", "join", nil, guild, nil)
+end
+local function guildUpdate(guild)
+    if dbFile.getGuildName(guild.id) ~= guild.name then
+        local client = guild.client
+        misc.cmdHook(client, dbFile.getGuildName(guild.id), "info", "nameChange", nil, guild, nil)
+        dbFile.updateGuildName(guild.id, guild.name)
+    end
+end
+local function guildDelete(guild)
+    local client = guild.client
+    misc.cmdHook(client, nil, "info", "leave", nil, guild, nil)
+end
+local function channelDelete(channel)
+    if channel.id == dbFile.getDailyChannel(channel.guild.id) then
+        local client = channel.client
+        misc.cmdHook(client, misc.getDefaultChannel(channel.guild).id, "info", "channelDelete", nil, channel.guild, nil)
+        dbFile.updateDailyChannel(channel.id, misc.getDefaultChannel(channel.guild).id)
+    end
+end
 
 return {
     messageCreate = messageCreate,
     guildCreate = guildCreate,
     guildUpdate = guildUpdate,
     guildDelete = guildDelete,
-    ready = ready
+    channelDelete = channelDelete
 }

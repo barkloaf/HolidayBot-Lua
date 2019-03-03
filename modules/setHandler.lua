@@ -9,6 +9,7 @@ local function setAdult(client, message, args)
     if args[3] == "on" or args[3] == "true" then dbFile.updateAdult(message.guild.id, true)
     elseif args[3] == "on" or args[3] == "false" then dbFile.updateAdult(message.guild.id, false)
     else
+        misc.cmdHook(client, message.content, "fail", "Syntax", message.author, message.guild, nil)
         return message.channel:send{embed = {
             color = 0xc6373e,
             author = {
@@ -29,6 +30,7 @@ local function setDaily(client, message, args)
     if args[3] == "on" or args[3] == "true" then dbFile.updateDaily(message.guild.id, true)
     elseif args[3] == "off" or args[3] == "false" then dbFile.updateDaily(message.guild.id, false)
     else
+        misc.cmdHook(client, message.content, "fail", "Syntax", message.author, message.guild, nil)
         return message.channel:send{embed = {
             color = 0xc6373e,
             author = {
@@ -49,6 +51,7 @@ local function setCommand(client, message, args)
     if args[3] == "on" or args[3] == "true" then dbFile.updateCommand(message.guild.id, true)
     elseif args[3] == "on" or args[3] == "false" then dbFile.updateCommand(message.guild.id, false)
     else
+        misc.cmdHook(client, message.content, "fail", "Syntax", message.author, message.guild, nil)
         return message.channel:send{embed = {
             color = 0xc6373e,
             author = {
@@ -70,7 +73,8 @@ local function setRegion(client, message, args)
 end
 
 local function setDailyChannel(client, message, args)
-    if message.mentionChannels[1] then
+    if not message.mentionedChannels.first then
+        misc.cmdHook(client, message.content, "fail", "Syntax", message.author, message.guild, nil)
         return message.channel:send{embed = {
             color = 0xc6373e,
             author = {
@@ -85,7 +89,9 @@ local function setDailyChannel(client, message, args)
             }
         }}
     end
-    if not message.guild.me:hasPermisssion(message.mentionChannels[1].id, 0x00000800) then
+    p('owu')
+    if not message.guild.me:hasPermisssion(message.mentionedChannels.first, 0x00000800) then
+        misc.cmdHook(client, message.content, "fail", "Permission", message.author, message.guild, nil)
         return message.channel:send{embed = {
             color = 0xc6373e,
             author = {
@@ -100,7 +106,8 @@ local function setDailyChannel(client, message, args)
             }
         }}
     end
-    dbFile.updateDailyChannel(message.guild.id, message.mentionChannels[1].id)
+    p('owu2')
+    dbFile.updateDailyChannel(message.guild.id, message.mentionedChannels.first.id)
 end
 
 local function reset(client, message, args)

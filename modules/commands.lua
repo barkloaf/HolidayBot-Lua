@@ -7,27 +7,43 @@ local config = json.decode(misc.readAll("config.json"))
 local envir = setmetatable({
     require = require,
     discordia = discordia,
+    dbFile = dbFile
 }, {__index = _G})
 
 local function ping(client, message)
-    message.channel:send{embed = {
+    local reply = message:reply{embed = {
         color = 0x10525C,
         author = {
             name = client.user.username,
             icon_url = client.user:getAvatarURL()
         },
         title = "Pong!",
-        description = (Date() - Date.fromSnowflake(message.id)):toString(),
+        description = "Calculating...",
         footer = {
             icon_url = message.author:getAvatarURL(),
             text = message.author.username
         }
     }}
+    local ping = math.abs(math.round((reply.createdAt - message.createdAt)*1000))
+    reply:setEmbed{
+        color = 0x10525C,
+        author = {
+            name = client.user.username,
+            icon_url = client.user:getAvatarURL()
+        },
+        title = "Pong!",
+        description = "**Message Latency:** ".. ping.. " ms",
+        footer = {
+            icon_url = message.author:getAvatarURL(),
+            text = message.author.username
+        }
+    }
 end
 
 local function set(client, message, args)
     local setHandler = require("./setHandler")
-    if not message.member:hasPermission(0x00000020) then
+    if not message.member:hasPermission(0x00000020) and config["ownerID"] ~= message.author.id then
+        misc.cmdHook(client, message.content, "fail", "Permission", message.author, message.guild, nil)
         return message.channel:send{embed = {
             color = 0xc6373e,
             author = {
@@ -43,6 +59,7 @@ local function set(client, message, args)
         }}
     end
     if setHandler["".. args[2]] == nil or args[2] == nil then
+        misc.cmdHook(client, message.content, "fail", "Syntax", message.author, message.guild, nil)
         return message.channel:send{embed = {
             color = 0xc6373e,
             author = {
@@ -131,6 +148,7 @@ local function die(client, message, args)
         }}
         client:stop()
     else
+        misc.cmdHook(client, message.content, "fail", "Permission", message.author, message.guild, nil)
         return message.channel:send{embed = {
             color = 0xc6373e,
             author = {
@@ -160,6 +178,8 @@ local function eval(client, message, args, command)
         local f, loadErr = load(code, "eval", "t", envir)
 
         if not f then
+            misc.cmdHook(client, message.content, "fail", "Eval Load Error", message.author, message.guild, nil)
+            local stringedError = tostring(loadErr)
             return message.channel:send{embed = {
                 color = 0x10525C,
                 title = "❌ Eval Failed",
@@ -169,15 +189,15 @@ local function eval(client, message, args, command)
                 },
                 {
                     name = "Output",
-                    value = loadErr
+                    value = stringedError
                 }
                 }
             }}
         else
             local success, output = pcall(f)
             if success then
-                local newOutput = "```lua\n".. output.. "\n```"
-                if(string.len(output) > 1028) then output = "```lua\noverflow```" end
+                local newOutput = "```lua\n".. tostring(output).. "\n```"
+                if(string.len(newOutput) > 1028) then newOutput = "```lua\noverflow```" end
                 return message.channel:send{embed = {
                     color = 0x10525c,
                     title = "✅ Eval Successful",
@@ -191,6 +211,8 @@ local function eval(client, message, args, command)
                     }}
                 }}
             else
+                misc.cmdHook(client, message.content, "fail", "Eval Runtime Error", message.author, message.guild, nil)
+                local stringedError = tostring(output)
                 return message.channel:send{embed = {
                     color = 0x10525C,
                     title = "❌ Eval Failed",
@@ -200,14 +222,16 @@ local function eval(client, message, args, command)
                     },
                     {
                         name = "Output",
-                        value = error
+                        value = stringedError
                     }
                     }
                 }}
             end
         end
 
-    else return message.channel:send{embed = {
+    else
+        misc.cmdHook(client, message.content, "fail", "Permission", message.author, message.guild, nil)
+        return message.channel:send{embed = {
         color = 0xc6373e,
         author = {
             name = client.user.username,
@@ -228,6 +252,7 @@ local function help(client, message, args)
     if args[2] == nil then args[2] = "base" end
 
     if helpHandler[args[2]] == nil then
+        misc.cmdHook(client, message.content, "fail", "Syntax", message.author, message.guild, nil)
         return message.channel:send{embed = {
             color = 0xc6373e,
             author = {
@@ -246,6 +271,74 @@ local function help(client, message, args)
     helpHandler["".. args[2]](client, message)
 end
 
+local function about(client, message)
+    return message.channel:send{embed = {
+        color = 0x10525C,
+        author = {
+            name = client.user.username,
+            icon_url = client.user:getAvatarURL()
+        },
+        title = "Hello, my name is HolidayBot Lua!",
+        description = "I am a port of HolidayBot created with Discordia that spits out real holidays that you may have never heard of before. All holidays are grabbed from [checkiday.com](https://checkiday.com)",
+        thumbnail = {url = client.user:getAvatarURL()},
+        fields = {{
+            name = "Check out the source",
+            value = "[GitHub](https://github.com/barkloaf/HolidayBot-Lua)"
+        },
+        {
+            name = "Feedback?",
+            value = "Feel free to contact the bot owner, <@".. config.ownerID.. "> :3"
+        }},
+        footer = {
+            icon_url = message.author:getAvatarURL(),
+            text = message.author.username
+        }
+    }}
+end
+
+local function stats(client, message)
+    local botUptime = tostring(discordia.storage.uptime:getTime():toString())
+    local process = require("process")
+    local luvi = require('luvi')
+    local luviVersion = luvi.bundle.action("package.lua", dofile).version
+    return message.channel:send{embed = {
+        color = 0x10525C,
+        author = {
+            name = client.user.username,
+            icon_url = client.user:getAvatarURL()
+        },
+        title = "HolidayBot Lua Stats",
+        fields = {{
+            name = "# of guilds",
+            value = client.guilds:count()
+        },
+        {
+            name = "# of users",
+            value = client.users:count()
+        },
+        {
+            name = "Discordia Version",
+            value = discordia.package.version
+        },
+        {
+            name = "Luvit Version",
+            value = luviVersion
+        },
+        {
+            name = "Memory Usage",
+            value = ""..tostring((process.globalProcess().memoryUsage().heapUsed / 1024 / 1024)):gsub("%.(%d%d)%d+",".%1").. " MiB"
+        },
+        {
+            name = "Uptime",
+            value = botUptime
+        }},
+        footer = {
+            icon_url = message.author:getAvatarURL(),
+            text = message.author.username
+        }
+    }}
+end
+
 return {
     ["ping"] = ping,
     ["set"] = set,
@@ -253,4 +346,6 @@ return {
     ["die"] = die,
     ["eval"] = eval,
     ["help"] = help,
+    ["about"] = about,
+    ["stats"] = stats,
 }
